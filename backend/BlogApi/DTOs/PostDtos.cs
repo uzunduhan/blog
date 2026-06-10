@@ -1,8 +1,8 @@
 namespace BlogApi.DTOs;
 
-public record CreatePostDto(string Title, string Content);
+public record CreatePostDto(string Title, string Content, string? ImageUrl);
 
-public record UpdatePostDto(string Title, string Content);
+public record UpdatePostDto(string Title, string Content, string? ImageUrl);
 
 public record PostResponseDto(
     int Id,
@@ -10,4 +10,6 @@ public record PostResponseDto(
     string Content,
     DateTime CreatedDate,
     bool IsApproved,
-    string AuthorUsername);
+    string AuthorUsername,
+    int CommentCount,
+    string? ImageUrl);

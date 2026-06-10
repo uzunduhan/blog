@@ -13,7 +13,7 @@ public class PostService(ApplicationDbContext db) : IPostService
             .Where(p => p.IsApproved)
             .Include(p => p.Author)
             .OrderByDescending(p => p.CreatedDate)
-            .Select(p => new PostResponseDto(p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved, p.Author.UserName!))
+            .Select(p => new PostResponseDto(p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved, p.Author.UserName!, p.Comments.Count, p.ImageUrl))
             .ToListAsync();
 
     public async Task<IEnumerable<PostResponseDto>> GetPendingAsync() =>
@@ -21,20 +21,30 @@ public class PostService(ApplicationDbContext db) : IPostService
             .Where(p => !p.IsApproved)
             .Include(p => p.Author)
             .OrderByDescending(p => p.CreatedDate)
-            .Select(p => new PostResponseDto(p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved, p.Author.UserName!))
+            .Select(p => new PostResponseDto(p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved, p.Author.UserName!, p.Comments.Count, p.ImageUrl))
             .ToListAsync();
 
-    public async Task<ServiceResult<PostResponseDto>> GetByIdAsync(int id, bool isAdmin)
+    public async Task<IEnumerable<PostResponseDto>> GetUserPostsAsync(string userId) =>
+        await db.Posts
+            .Where(p => p.AuthorId == userId)
+            .Include(p => p.Author)
+            .OrderBy(p => p.IsApproved)
+            .ThenByDescending(p => p.CreatedDate)
+            .Select(p => new PostResponseDto(p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved, p.Author.UserName!, p.Comments.Count, p.ImageUrl))
+            .ToListAsync();
+
+    public async Task<ServiceResult<PostResponseDto>> GetByIdAsync(int id, bool isAdmin, string? userId = null)
     {
         var post = await db.Posts
             .Include(p => p.Author)
+            .Include(p => p.Comments)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (post is null) return ServiceResult<PostResponseDto>.NotFound();
-        if (!post.IsApproved && !isAdmin) return ServiceResult<PostResponseDto>.Forbidden();
+        if (!post.IsApproved && !isAdmin && post.AuthorId != userId) return ServiceResult<PostResponseDto>.Forbidden();
 
         return ServiceResult<PostResponseDto>.Ok(
-            new PostResponseDto(post.Id, post.Title, post.Content, post.CreatedDate, post.IsApproved, post.Author.UserName!));
+            new PostResponseDto(post.Id, post.Title, post.Content, post.CreatedDate, post.IsApproved, post.Author.UserName!, post.Comments.Count, post.ImageUrl));
     }
 
     public async Task<int> CreateAsync(CreatePostDto dto, string userId)
@@ -43,6 +53,7 @@ public class PostService(ApplicationDbContext db) : IPostService
         {
             Title = dto.Title,
             Content = dto.Content,
+            ImageUrl = dto.ImageUrl,
             AuthorId = userId,
             IsApproved = false
         };
@@ -60,6 +71,7 @@ public class PostService(ApplicationDbContext db) : IPostService
 
         post.Title = dto.Title;
         post.Content = dto.Content;
+        post.ImageUrl = dto.ImageUrl;
         post.IsApproved = false;
         await db.SaveChangesAsync();
         return ServiceResult.Ok();

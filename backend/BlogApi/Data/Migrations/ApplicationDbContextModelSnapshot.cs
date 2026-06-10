@@ -136,6 +136,9 @@ namespace BlogApi.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsApproved")
                         .HasColumnType("boolean");
 

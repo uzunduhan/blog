@@ -130,3 +130,4 @@ C:\Users\duhan.uzun\Desktop\Duhan\blog\backend\BlogApi\obj\Debug\net10.0\BlogApi
 C:\Users\duhan.uzun\Desktop\Duhan\blog\backend\BlogApi\bin\Debug\net10.0\Microsoft.AspNetCore.OpenApi.dll
 C:\Users\duhan.uzun\Desktop\Duhan\blog\backend\BlogApi\bin\Debug\net10.0\Microsoft.OpenApi.dll
 C:\Users\duhan.uzun\Desktop\Duhan\blog\backend\BlogApi\bin\Debug\net10.0\Scalar.AspNetCore.dll
+C:\Users\duhan.uzun\Desktop\Duhan\blog\backend\BlogApi\obj\Debug\net10.0\BlogApi.sourcelink.json

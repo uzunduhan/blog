@@ -20,10 +20,19 @@ public class PostsController(IPostService postService) : ControllerBase
     public async Task<IActionResult> GetPending() =>
         Ok(await postService.GetPendingAsync());
 
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<IActionResult> GetMy()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        return Ok(await postService.GetUserPostsAsync(userId));
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var result = await postService.GetByIdAsync(id, User.IsInRole("Admin"));
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var result = await postService.GetByIdAsync(id, User.IsInRole("Admin"), userId);
         return result.Status switch
         {
             ResultStatus.NotFound => NotFound(),
