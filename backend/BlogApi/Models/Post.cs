@@ -13,4 +13,5 @@ public class Post
     public ApplicationUser Author { get; set; } = null!;
 
     public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<Category> Categories { get; set; } = [];
 }

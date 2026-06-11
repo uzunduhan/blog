@@ -1,0 +1,4665 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/node_modules/**, **/bin/**, **/obj/**, **/.vs/**, **/dist/**, **/build/**, *.user
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+backend/BlogApi/appsettings.Development.json
+backend/BlogApi/appsettings.json
+backend/BlogApi/BlogApi.csproj
+backend/BlogApi/BlogApi.http
+backend/BlogApi/Controllers/AuthController.cs
+backend/BlogApi/Controllers/CategoriesController.cs
+backend/BlogApi/Controllers/CommentsController.cs
+backend/BlogApi/Controllers/PostsController.cs
+backend/BlogApi/Data/ApplicationDbContext.cs
+backend/BlogApi/Data/Migrations/20260512160551_InitialCreate.cs
+backend/BlogApi/Data/Migrations/20260512160551_InitialCreate.Designer.cs
+backend/BlogApi/Data/Migrations/20260610185957_AddImageUrlToPost.cs
+backend/BlogApi/Data/Migrations/20260610185957_AddImageUrlToPost.Designer.cs
+backend/BlogApi/Data/Migrations/ApplicationDbContextModelSnapshot.cs
+backend/BlogApi/Dockerfile
+backend/BlogApi/DTOs/AuthDtos.cs
+backend/BlogApi/DTOs/CategoryDtos.cs
+backend/BlogApi/DTOs/CommentDtos.cs
+backend/BlogApi/DTOs/PostDtos.cs
+backend/BlogApi/Extensions/ServiceCollectionExtensions.cs
+backend/BlogApi/Extensions/WebApplicationExtensions.cs
+backend/BlogApi/Models/ApplicationUser.cs
+backend/BlogApi/Models/Category.cs
+backend/BlogApi/Models/Comment.cs
+backend/BlogApi/Models/Post.cs
+backend/BlogApi/Program.cs
+backend/BlogApi/Properties/launchSettings.json
+backend/BlogApi/Services/AuthService.cs
+backend/BlogApi/Services/CategoryService.cs
+backend/BlogApi/Services/CommentService.cs
+backend/BlogApi/Services/IAuthService.cs
+backend/BlogApi/Services/ICategoryService.cs
+backend/BlogApi/Services/ICommentService.cs
+backend/BlogApi/Services/IPostService.cs
+backend/BlogApi/Services/PostService.cs
+backend/BlogApi/Services/Results/ServiceResult.cs
+CLAUDE.md
+frontend/.env
+frontend/.gitignore
+frontend/eslint.config.js
+frontend/Gemini_Generated_Image_clx7wqclx7wqclx7.png
+frontend/index.html
+frontend/package.json
+frontend/postcss.config.js
+frontend/public/favicon.svg
+frontend/public/icons.svg
+frontend/README.md
+frontend/src/api/authApi.ts
+frontend/src/api/axios.ts
+frontend/src/api/commentsApi.ts
+frontend/src/api/postsApi.ts
+frontend/src/App.css
+frontend/src/App.tsx
+frontend/src/assets/hero.png
+frontend/src/assets/react.svg
+frontend/src/assets/vite.svg
+frontend/src/components/comments/CommentForm.tsx
+frontend/src/components/comments/CommentList.tsx
+frontend/src/components/layout/Footer.tsx
+frontend/src/components/layout/Navbar.tsx
+frontend/src/components/posts/PostCard.tsx
+frontend/src/components/posts/PostForm.tsx
+frontend/src/components/ui/Alert.tsx
+frontend/src/components/ui/Badge.tsx
+frontend/src/components/ui/Button.tsx
+frontend/src/components/ui/Spinner.tsx
+frontend/src/context/AuthContext.tsx
+frontend/src/context/ThemeContext.tsx
+frontend/src/guards/AdminRoute.tsx
+frontend/src/guards/PrivateRoute.tsx
+frontend/src/hooks/useAuth.ts
+frontend/src/index.css
+frontend/src/main.tsx
+frontend/src/pages/AdminPage.tsx
+frontend/src/pages/CreatePostPage.tsx
+frontend/src/pages/EditPostPage.tsx
+frontend/src/pages/HomePage.tsx
+frontend/src/pages/LoginPage.tsx
+frontend/src/pages/MyPostsPage.tsx
+frontend/src/pages/PostDetailPage.tsx
+frontend/src/pages/RegisterPage.tsx
+frontend/src/types/auth.ts
+frontend/src/types/comment.ts
+frontend/src/types/post.ts
+frontend/tailwind.config.js
+frontend/tsconfig.app.json
+frontend/tsconfig.json
+frontend/tsconfig.node.json
+frontend/vite.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/BlogApi/Controllers/CategoriesController.cs">
+using BlogApi.DTOs;
+using BlogApi.Services;
+using BlogApi.Services.Results;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BlogApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class CategoriesController(ICategoryService categoryService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetAll() =>
+        Ok(await categoryService.GetAllAsync());
+
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
+    {
+        var result = await categoryService.CreateAsync(dto);
+        return result.Status switch
+        {
+            ResultStatus.Conflict => Conflict(new { message = "Bu kategori zaten mevcut." }),
+            ResultStatus.NotFound => BadRequest(new { message = "Geçersiz kategori adı." }),
+            _ => StatusCode(201, result.Data)
+        };
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await categoryService.DeleteAsync(id);
+        return result.Status == ResultStatus.NotFound ? NotFound() : NoContent();
+    }
+}
+</file>
+
+<file path="backend/BlogApi/DTOs/CategoryDtos.cs">
+namespace BlogApi.DTOs;
+
+public record CategoryDto(int Id, string Name);
+public record CreateCategoryDto(string Name);
+</file>
+
+<file path="backend/BlogApi/Models/Category.cs">
+namespace BlogApi.Models;
+
+public class Category
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+
+    public ICollection<Post> Posts { get; set; } = [];
+}
+</file>
+
+<file path="backend/BlogApi/Services/CategoryService.cs">
+using BlogApi.Data;
+using BlogApi.DTOs;
+using BlogApi.Models;
+using BlogApi.Services.Results;
+using Microsoft.EntityFrameworkCore;
+
+namespace BlogApi.Services;
+
+public class CategoryService(ApplicationDbContext db) : ICategoryService
+{
+    public async Task<IEnumerable<CategoryDto>> GetAllAsync() =>
+        await db.Categories
+            .OrderBy(c => c.Name)
+            .Select(c => new CategoryDto(c.Id, c.Name))
+            .ToListAsync();
+
+    public async Task<ServiceResult<CategoryDto>> CreateAsync(CreateCategoryDto dto)
+    {
+        var name = dto.Name.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return ServiceResult<CategoryDto>.NotFound();
+
+        var exists = await db.Categories.AnyAsync(c => c.Name.ToLower() == name.ToLower());
+        if (exists) return ServiceResult<CategoryDto>.Conflict();
+
+        var category = new Category { Name = name };
+        db.Categories.Add(category);
+        await db.SaveChangesAsync();
+        return ServiceResult<CategoryDto>.Ok(new CategoryDto(category.Id, category.Name));
+    }
+
+    public async Task<ServiceResult> DeleteAsync(int id)
+    {
+        var category = await db.Categories.FindAsync(id);
+        if (category is null) return ServiceResult.NotFound();
+
+        db.Categories.Remove(category);
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Services/ICategoryService.cs">
+using BlogApi.DTOs;
+using BlogApi.Services.Results;
+
+namespace BlogApi.Services;
+
+public interface ICategoryService
+{
+    Task<IEnumerable<CategoryDto>> GetAllAsync();
+    Task<ServiceResult<CategoryDto>> CreateAsync(CreateCategoryDto dto);
+    Task<ServiceResult> DeleteAsync(int id);
+}
+</file>
+
+<file path=".gitignore">
+/plan.txt
+</file>
+
+<file path="backend/BlogApi/appsettings.Development.json">
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+</file>
+
+<file path="backend/BlogApi/appsettings.json">
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=blogdb;Username=postgres;Password=123456"
+  },
+  "Jwt": {
+    "Key": "CHANGE_ME_TO_A_STRONG_SECRET_KEY_MIN_32_CHARS",
+    "Issuer": "BlogApi",
+    "Audience": "BlogApiClients",
+    "ExpiresInMinutes": 60
+  },
+  "Cors": {
+    "AllowedOrigins": [ "http://localhost:5173" ]
+  }
+}
+</file>
+
+<file path="backend/BlogApi/BlogApi.csproj">
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OpenApi" Version="2.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.14.14" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="backend/BlogApi/BlogApi.http">
+@BlogApi_HostAddress = http://localhost:5177
+
+GET {{BlogApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+</file>
+
+<file path="backend/BlogApi/Controllers/AuthController.cs">
+using BlogApi.DTOs;
+using BlogApi.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BlogApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController(IAuthService authService) : ControllerBase
+{
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    {
+        var (success, errors) = await authService.RegisterAsync(dto);
+        if (!success) return BadRequest(errors);
+        return Ok(new { message = "Registration successful." });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    {
+        var result = await authService.LoginAsync(dto);
+        if (result is null) return Unauthorized(new { message = "Invalid credentials." });
+        return Ok(result);
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Controllers/CommentsController.cs">
+using System.Security.Claims;
+using BlogApi.DTOs;
+using BlogApi.Services;
+using BlogApi.Services.Results;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BlogApi.Controllers;
+
+[ApiController]
+[Route("api/posts/{postId:int}/comments")]
+public class CommentsController(ICommentService commentService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetByPost(int postId)
+    {
+        var result = await commentService.GetByPostAsync(postId);
+        return result.Status == ResultStatus.NotFound ? NotFound() : Ok(result.Data);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Create(int postId, [FromBody] CreateCommentDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await commentService.CreateAsync(postId, dto, userId);
+        return result.Status == ResultStatus.NotFound
+            ? NotFound()
+            : StatusCode(201, new { id = result.Data });
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Delete(int postId, int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await commentService.DeleteAsync(postId, id, userId, User.IsInRole("Admin"));
+        return result.Status switch
+        {
+            ResultStatus.NotFound => NotFound(),
+            ResultStatus.Forbidden => Forbid(),
+            _ => NoContent()
+        };
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/ApplicationDbContext.cs">
+using BlogApi.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace BlogApi.Data;
+
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<ApplicationUser>(options)
+{
+    public DbSet<Post> Posts => Set<Post>();
+    public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Category> Categories => Set<Category>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<Post>(e =>
+        {
+            e.HasOne(p => p.Author)
+             .WithMany(u => u.Posts)
+             .HasForeignKey(p => p.AuthorId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Comment>(e =>
+        {
+            e.HasOne(c => c.Post)
+             .WithMany(p => p.Comments)
+             .HasForeignKey(c => c.PostId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.User)
+             .WithMany(u => u.Comments)
+             .HasForeignKey(c => c.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Post>()
+            .HasMany(p => p.Categories)
+            .WithMany(c => c.Posts)
+            .UsingEntity(j => j.ToTable("PostCategories"));
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/Migrations/20260512160551_InitialCreate.cs">
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace BlogApi.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class InitialCreate : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "AspNetRoles",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUsers",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetRoleClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserLogins",
+                columns: table => new
+                {
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Posts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsApproved = table.Column<bool>(type: "boolean", nullable: false),
+                    AuthorId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Posts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Posts_AspNetUsers_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Comments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Text = table.Column<string>(type: "text", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PostId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Comments_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Comments_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetRoleClaims_RoleId",
+                table: "AspNetRoleClaims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "AspNetRoles",
+                column: "NormalizedName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserClaims_UserId",
+                table: "AspNetUserClaims",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserLogins_UserId",
+                table: "AspNetUserLogins",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserRoles_RoleId",
+                table: "AspNetUserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "EmailIndex",
+                table: "AspNetUsers",
+                column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "UserNameIndex",
+                table: "AspNetUsers",
+                column: "NormalizedUserName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_PostId",
+                table: "Comments",
+                column: "PostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_UserId",
+                table: "Comments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_AuthorId",
+                table: "Posts",
+                column: "AuthorId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "AspNetRoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserLogins");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserRoles");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Comments");
+
+            migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Posts");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/Migrations/20260512160551_InitialCreate.Designer.cs">
+// <auto-generated />
+using System;
+using BlogApi.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace BlogApi.Data.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260512160551_InitialCreate")]
+    partial class InitialCreate
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("Posts");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.HasOne("BlogApi.Models.Post", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", "Author")
+                        .WithMany("Posts")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Navigation("Comments");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/Migrations/20260610185957_AddImageUrlToPost.cs">
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace BlogApi.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddImageUrlToPost : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "ImageUrl",
+                table: "Posts",
+                type: "text",
+                nullable: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "ImageUrl",
+                table: "Posts");
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/Migrations/20260610185957_AddImageUrlToPost.Designer.cs">
+// <auto-generated />
+using System;
+using BlogApi.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace BlogApi.Data.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260610185957_AddImageUrlToPost")]
+    partial class AddImageUrlToPost
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("Posts");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.HasOne("BlogApi.Models.Post", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", "Author")
+                        .WithMany("Posts")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Navigation("Comments");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Dockerfile">
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY ["BlogApi.csproj", "./"]
+RUN dotnet restore
+
+COPY . .
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:10000
+
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "BlogApi.dll"]
+</file>
+
+<file path="backend/BlogApi/DTOs/AuthDtos.cs">
+namespace BlogApi.DTOs;
+
+public record RegisterDto(string Username, string Email, string Password);
+
+public record LoginDto(string Email, string Password);
+
+public record AuthResponseDto(string Token, string Username, string Role);
+</file>
+
+<file path="backend/BlogApi/DTOs/CommentDtos.cs">
+namespace BlogApi.DTOs;
+
+public record CreateCommentDto(string Text);
+
+public record CommentResponseDto(
+    int Id,
+    string Text,
+    DateTime CreatedDate,
+    string Username);
+</file>
+
+<file path="backend/BlogApi/Extensions/ServiceCollectionExtensions.cs">
+using System.Text;
+using BlogApi.Data;
+using BlogApi.Models;
+using BlogApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+
+namespace BlogApi.Extensions;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        return services;
+    }
+
+    public static IServiceCollection AddIdentityServices(this IServiceCollection services)
+    {
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            options.Password.RequireDigit = true;
+            options.Password.RequiredLength = 6;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+        })
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+        return services;
+    }
+
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwtKey = configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("JWT key is not configured.");
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["Jwt:Issuer"] ?? "BlogApi",
+                ValidAudience = configuration["Jwt:Audience"] ?? "BlogApiClients",
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+        services.AddAuthorization();
+        return services;
+    }
+
+    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                              ?? ["http://localhost:5173"];
+                policy.WithOrigins(origins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    {
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPostService, PostService>();
+        services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        return services;
+    }
+
+    public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services)
+    {
+        services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, _, _) =>
+            {
+                document.Info.Title = "Blog API";
+                document.Info.Version = "v1";
+                document.Info.Description = "Full-stack blog sistemi için REST API.";
+
+                document.Components ??= new OpenApiComponents();
+                if (document.Components.SecuritySchemes is null)
+                {
+                    document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>();
+                }
+
+                document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "Jwt Token"
+                };
+
+                return Task.CompletedTask;
+            });
+
+            options.AddOperationTransformer((operation, context, _) =>
+            {
+                var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata
+                    .OfType<AuthorizeAttribute>()
+                    .Any();
+
+                if (hasAuthorize)
+                {
+                    operation.Security =
+                    [
+                        new OpenApiSecurityRequirement
+                        {
+                            [new OpenApiSecuritySchemeReference("Bearer")] = []
+                        }
+                    ];
+                }
+
+                return Task.CompletedTask;
+            });
+        });
+
+        return services;
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Extensions/WebApplicationExtensions.cs">
+using Microsoft.AspNetCore.Identity;
+
+namespace BlogApi.Extensions;
+
+public static class WebApplicationExtensions
+{
+    public static async Task SeedRolesAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        foreach (var role in new[] { "Admin", "User" })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Models/ApplicationUser.cs">
+using Microsoft.AspNetCore.Identity;
+
+namespace BlogApi.Models;
+
+public class ApplicationUser : IdentityUser
+{
+    public ICollection<Post> Posts { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
+}
+</file>
+
+<file path="backend/BlogApi/Models/Comment.cs">
+namespace BlogApi.Models;
+
+public class Comment
+{
+    public int Id { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public int PostId { get; set; }
+    public Post Post { get; set; } = null!;
+
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser User { get; set; } = null!;
+}
+</file>
+
+<file path="backend/BlogApi/Program.cs">
+using BlogApi.Extensions;
+using Scalar.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddIdentityServices();
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddCorsPolicy(builder.Configuration);
+builder.Services.AddApplicationServices();
+builder.Services.AddOpenApiDocumentation();
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+await app.SeedRolesAsync();
+
+app.MapOpenApi();
+app.MapScalarApiReference(options =>
+{
+    options.Title = "Blog API";
+    options.AddHttpAuthentication("Bearer", bearer =>
+    {
+        bearer.Token = string.Empty;
+    });
+});
+
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
+</file>
+
+<file path="backend/BlogApi/Properties/launchSettings.json">
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5177",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:7160;http://localhost:5177",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+</file>
+
+<file path="backend/BlogApi/Services/AuthService.cs">
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using BlogApi.DTOs;
+using BlogApi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+
+namespace BlogApi.Services;
+
+public class AuthService(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    IConfiguration configuration) : IAuthService
+{
+    public async Task<(bool Success, IEnumerable<string> Errors)> RegisterAsync(RegisterDto dto)
+    {
+        var user = new ApplicationUser
+        {
+            UserName = dto.Username,
+            Email = dto.Email
+        };
+
+        var result = await userManager.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+            return (false, result.Errors.Select(e => e.Description));
+
+        await userManager.AddToRoleAsync(user, "User");
+        return (true, []);
+    }
+
+    public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
+    {
+        var user = await userManager.FindByEmailAsync(dto.Email);
+        if (user is null) return null;
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
+        if (!result.Succeeded) return null;
+
+        var roles = await userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "User";
+        var token = GenerateJwt(user, role);
+
+        return new AuthResponseDto(token, user.UserName!, role);
+    }
+
+    private string GenerateJwt(ApplicationUser user, string role)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expires = DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("Jwt:ExpiresInMinutes", 60));
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!),
+            new Claim(ClaimTypes.Role, role),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"],
+            audience: configuration["Jwt:Audience"],
+            claims: claims,
+            expires: expires,
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Services/CommentService.cs">
+using BlogApi.Data;
+using BlogApi.DTOs;
+using BlogApi.Models;
+using BlogApi.Services.Results;
+using Microsoft.EntityFrameworkCore;
+
+namespace BlogApi.Services;
+
+public class CommentService(ApplicationDbContext db) : ICommentService
+{
+    public async Task<ServiceResult<IEnumerable<CommentResponseDto>>> GetByPostAsync(int postId)
+    {
+        var postExists = await db.Posts.AnyAsync(p => p.Id == postId && p.IsApproved);
+        if (!postExists) return ServiceResult<IEnumerable<CommentResponseDto>>.NotFound();
+
+        var comments = await db.Comments
+            .Where(c => c.PostId == postId)
+            .Include(c => c.User)
+            .OrderBy(c => c.CreatedDate)
+            .Select(c => new CommentResponseDto(c.Id, c.Text, c.CreatedDate, c.User.UserName!))
+            .ToListAsync();
+
+        return ServiceResult<IEnumerable<CommentResponseDto>>.Ok(comments);
+    }
+
+    public async Task<ServiceResult<int>> CreateAsync(int postId, CreateCommentDto dto, string userId)
+    {
+        var postExists = await db.Posts.AnyAsync(p => p.Id == postId && p.IsApproved);
+        if (!postExists) return ServiceResult<int>.NotFound();
+
+        var comment = new Comment { PostId = postId, UserId = userId, Text = dto.Text };
+        db.Comments.Add(comment);
+        await db.SaveChangesAsync();
+        return ServiceResult<int>.Ok(comment.Id);
+    }
+
+    public async Task<ServiceResult> DeleteAsync(int postId, int id, string userId, bool isAdmin)
+    {
+        var comment = await db.Comments.FirstOrDefaultAsync(c => c.Id == id && c.PostId == postId);
+        if (comment is null) return ServiceResult.NotFound();
+        if (comment.UserId != userId && !isAdmin) return ServiceResult.Forbidden();
+
+        db.Comments.Remove(comment);
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Services/IAuthService.cs">
+using BlogApi.DTOs;
+
+namespace BlogApi.Services;
+
+public interface IAuthService
+{
+    Task<(bool Success, IEnumerable<string> Errors)> RegisterAsync(RegisterDto dto);
+    Task<AuthResponseDto?> LoginAsync(LoginDto dto);
+}
+</file>
+
+<file path="backend/BlogApi/Services/ICommentService.cs">
+using BlogApi.DTOs;
+using BlogApi.Services.Results;
+
+namespace BlogApi.Services;
+
+public interface ICommentService
+{
+    Task<ServiceResult<IEnumerable<CommentResponseDto>>> GetByPostAsync(int postId);
+    Task<ServiceResult<int>> CreateAsync(int postId, CreateCommentDto dto, string userId);
+    Task<ServiceResult> DeleteAsync(int postId, int id, string userId, bool isAdmin);
+}
+</file>
+
+<file path="backend/BlogApi/Services/Results/ServiceResult.cs">
+namespace BlogApi.Services.Results;
+
+public enum ResultStatus { Ok, NotFound, Forbidden, Conflict }
+
+public class ServiceResult
+{
+    public ResultStatus Status { get; init; }
+
+    public static ServiceResult Ok() => new() { Status = ResultStatus.Ok };
+    public static ServiceResult NotFound() => new() { Status = ResultStatus.NotFound };
+    public static ServiceResult Forbidden() => new() { Status = ResultStatus.Forbidden };
+    public static ServiceResult Conflict() => new() { Status = ResultStatus.Conflict };
+}
+
+public class ServiceResult<T>
+{
+    public ResultStatus Status { get; init; }
+    public T? Data { get; init; }
+
+    public static ServiceResult<T> Ok(T data) => new() { Status = ResultStatus.Ok, Data = data };
+    public static ServiceResult<T> NotFound() => new() { Status = ResultStatus.NotFound };
+    public static ServiceResult<T> Forbidden() => new() { Status = ResultStatus.Forbidden };
+    public static ServiceResult<T> Conflict() => new() { Status = ResultStatus.Conflict };
+}
+</file>
+
+<file path="CLAUDE.md">
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+A full-stack blog application with:
+- **Backend**: ASP.NET Core 10 Web API (`backend/BlogApi/`)
+- **Frontend**: React 19 + TypeScript + Vite (`frontend/`)
+- **Database**: PostgreSQL via EF Core (Npgsql)
+
+## Commands
+
+### Backend (`backend/BlogApi/`)
+```bash
+dotnet run                          # Start API (http://localhost:5109)
+dotnet build                        # Build
+dotnet ef migrations add <Name>     # Add EF migration
+dotnet ef database update           # Apply migrations
+```
+
+### Frontend (`frontend/`)
+```bash
+npm run dev      # Start dev server (http://localhost:5173)
+npm run build    # TypeScript check + Vite production build
+npm run lint     # ESLint
+```
+
+## Architecture
+
+### Backend
+
+Controllers call service interfaces; services return `ServiceResult` / `ServiceResult<T>` (with `Ok`, `NotFound`, `Forbidden` statuses) and controllers map those to HTTP responses via a switch expression. This keeps HTTP concerns out of services.
+
+Service registration and infrastructure configuration (DB, Identity, JWT, CORS, OpenAPI) live in `Extensions/ServiceCollectionExtensions.cs` — `Program.cs` is intentionally thin. Role seeding (`Admin`, `User`) happens at startup via `Extensions/WebApplicationExtensions.cs`.
+
+**Post approval flow**: new posts default to `IsApproved = false`. Only `GET /api/posts` (public) returns approved posts. `GET /api/posts/pending` (Admin-only) returns unapproved ones. `POST /api/posts/{id}/approve` promotes a post.
+
+API documentation is served via Scalar at `/scalar/v1` (not Swagger UI).
+
+### Frontend
+
+Auth state is held in `AuthContext` (`src/context/AuthContext.tsx`) and persisted to `localStorage` (`token`, `username`, `role`). The axios instance in `src/api/axios.ts` attaches the Bearer token on every request and calls a registered `logoutCallback` on 401 — the callback is wired from `AuthContext` via `setLogoutCallback`.
+
+Route guards: `PrivateRoute` requires any authenticated user; `AdminRoute` requires `role === 'Admin'`.
+
+API calls are split by resource in `src/api/` (`authApi.ts`, `postsApi.ts`, `commentsApi.ts`), all using the shared axios instance.
+
+The `VITE_API_URL` env var sets the backend base URL (default assumed `http://localhost:5109`).
+
+## Configuration
+
+Backend (`appsettings.json`):
+- `ConnectionStrings:DefaultConnection` — PostgreSQL connection string (default: `localhost`, db `blogdb`, user `postgres`, password `123456`)
+- `Jwt:Key` — must be ≥ 32 chars; change before deploying
+- `Cors:AllowedOrigins` — array of allowed frontend origins (default: `http://localhost:5173`)
+
+Frontend: create `frontend/.env.local` with `VITE_API_URL=http://localhost:5109`.
+</file>
+
+<file path="frontend/.env">
+VITE_API_URL=http://localhost:5177
+</file>
+
+<file path="frontend/.gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="frontend/eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+])
+</file>
+
+<file path="frontend/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.17.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}
+</file>
+
+<file path="frontend/postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="frontend/public/favicon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="frontend/public/icons.svg">
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bluesky-icon" viewBox="0 0 16 17">
+    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
+    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
+  </symbol>
+  <symbol id="discord-icon" viewBox="0 0 20 19">
+    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
+  </symbol>
+  <symbol id="documentation-icon" viewBox="0 0 21 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
+  </symbol>
+  <symbol id="github-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="social-icon" viewBox="0 0 20 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+  </symbol>
+  <symbol id="x-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
+  </symbol>
+</svg>
+</file>
+
+<file path="frontend/README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+</file>
+
+<file path="frontend/src/api/authApi.ts">
+import api from './axios';
+import type { AuthResponse } from '../types/auth';
+
+export const register = (data: { username: string; email: string; password: string }) =>
+  api.post('/auth/register', data).then((r) => r.data);
+
+export const login = (data: { email: string; password: string }): Promise<AuthResponse> =>
+  api.post<AuthResponse>('/auth/login', data).then((r) => r.data);
+</file>
+
+<file path="frontend/src/api/axios.ts">
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL + '/api',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+let logoutCallback: (() => void) | null = null;
+
+export function setLogoutCallback(cb: () => void) {
+  logoutCallback = cb;
+}
+
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401 && logoutCallback) {
+      logoutCallback();
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+</file>
+
+<file path="frontend/src/api/commentsApi.ts">
+import api from './axios';
+import type { Comment, CreateCommentPayload } from '../types/comment';
+
+export const getByPost = (postId: number): Promise<Comment[]> =>
+  api.get(`/posts/${postId}/comments`).then((r) => r.data);
+
+export const createComment = (postId: number, data: CreateCommentPayload): Promise<Comment> =>
+  api.post(`/posts/${postId}/comments`, data).then((r) => r.data);
+
+export const deleteComment = (postId: number, commentId: number): Promise<void> =>
+  api.delete(`/posts/${postId}/comments/${commentId}`).then(() => undefined);
+</file>
+
+<file path="frontend/src/api/postsApi.ts">
+import api from './axios';
+import type { Post, CreatePostPayload, UpdatePostPayload } from '../types/post';
+
+export const getApproved = (): Promise<Post[]> => api.get('/posts').then((r) => r.data);
+export const getPending = (): Promise<Post[]> => api.get('/posts/pending').then((r) => r.data);
+export const getUserPosts = (): Promise<Post[]> => api.get('/posts/my').then((r) => r.data);
+export const getById = (id: number): Promise<Post> => api.get(`/posts/${id}`).then((r) => r.data);
+export const createPost = (data: CreatePostPayload): Promise<Post> => api.post('/posts', data).then((r) => r.data);
+export const updatePost = (id: number, data: UpdatePostPayload): Promise<Post> =>
+  api.put(`/posts/${id}`, data).then((r) => r.data);
+export const deletePost = (id: number): Promise<void> => api.delete(`/posts/${id}`).then(() => undefined);
+export const approvePost = (id: number): Promise<void> =>
+  api.post(`/posts/${id}/approve`).then(() => undefined);
+</file>
+
+<file path="frontend/src/App.css">
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+</file>
+
+<file path="frontend/src/App.tsx">
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Navbar } from './components/layout/Navbar';
+import { Footer } from './components/layout/Footer';
+import { PrivateRoute } from './guards/PrivateRoute';
+import { AdminRoute } from './guards/AdminRoute';
+import { HomePage } from './pages/HomePage';
+import { PostDetailPage } from './pages/PostDetailPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { CreatePostPage } from './pages/CreatePostPage';
+import { EditPostPage } from './pages/EditPostPage';
+import { AdminPage } from './pages/AdminPage';
+import { MyPostsPage } from './pages/MyPostsPage';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+        <Navbar />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/posts/create" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
+            <Route path="/posts/:id/edit" element={<PrivateRoute><EditPostPage /></PrivateRoute>} />
+            <Route path="/posts/:id" element={<PostDetailPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/my-posts" element={<PrivateRoute><MyPostsPage /></PrivateRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </BrowserRouter>
+  );
+}
+</file>
+
+<file path="frontend/src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="frontend/src/assets/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="frontend/src/components/comments/CommentForm.tsx">
+import { useState } from 'react';
+import { Button } from '../ui/Button';
+
+interface Props {
+  onSubmit: (text: string) => Promise<void>;
+  isLoading: boolean;
+}
+
+export function CommentForm({ onSubmit, isLoading }: Props) {
+  const [text, setText] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    await onSubmit(text);
+    setText('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        placeholder="Yorumunuzu yazın..."
+        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors resize-none"
+      />
+      <Button type="submit" isLoading={isLoading} className="self-end text-sm py-1.5">
+        Yorum Yap
+      </Button>
+    </form>
+  );
+}
+</file>
+
+<file path="frontend/src/components/comments/CommentList.tsx">
+import type { Comment } from '../../types/comment';
+import { useAuth } from '../../hooks/useAuth';
+import { Button } from '../ui/Button';
+
+interface Props {
+  comments: Comment[];
+  postId: number;
+  onDelete: (commentId: number) => void;
+}
+
+export function CommentList({ comments, onDelete }: Props) {
+  const { user, isAdmin } = useAuth();
+
+  if (comments.length === 0) {
+    return <p className="text-gray-500 text-sm">Henüz yorum yok. İlk yorumu sen yap!</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {comments.map((c) => {
+        const isOwner = user?.username === c.username;
+        const date = new Date(c.createdDate).toLocaleDateString('tr-TR', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        });
+
+        return (
+          <div key={c.id} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                <span className="text-gray-800 dark:text-gray-200 font-medium">{c.username}</span>
+                <span>·</span>
+                <span>{date}</span>
+              </div>
+              {(isAdmin || isOwner) && (
+                <Button variant="danger" className="text-xs py-0.5 px-2 shrink-0" onClick={() => onDelete(c.id)}>
+                  Sil
+                </Button>
+              )}
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{c.text}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/components/layout/Footer.tsx">
+export function Footer() {
+  return (
+    <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 mt-12 py-6 transition-colors">
+      <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span className="text-gray-500 dark:text-gray-400 text-sm">© {new Date().getFullYear()} DevBlog · Tüm hakları saklıdır</span>
+        <div className="flex items-center gap-4">
+          <a href="https://github.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" aria-label="GitHub">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+            </svg>
+          </a>
+          <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" aria-label="Twitter">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+</file>
+
+<file path="frontend/src/components/layout/Navbar.tsx">
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../context/ThemeContext';
+import { Button } from '../ui/Button';
+
+function SunIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  );
+}
+
+export function Navbar() {
+  const { user, isAdmin, isAuthenticated, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get('q') ?? '');
+
+  useEffect(() => {
+    setQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(query.trim() ? `/?q=${encodeURIComponent(query.trim())}` : '/');
+  };
+
+  return (
+    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm dark:shadow-none transition-colors">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+        <Link to="/" className="text-blue-600 dark:text-blue-400 font-bold text-lg tracking-tight hover:text-blue-700 dark:hover:text-blue-300 transition-colors shrink-0">
+          ◈ DevBlog
+        </Link>
+
+        <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Yazılarda ara..."
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
+          />
+        </form>
+
+        <div className="flex items-center gap-2 ml-auto shrink-0">
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Tema değiştir"
+          >
+            {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+          </button>
+
+          {isAuthenticated ? (
+            <>
+              <span className="text-gray-500 dark:text-gray-400 text-sm hidden sm:block">{user?.username}</span>
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="secondary" className="text-xs py-1.5">Admin Panel</Button>
+                </Link>
+              )}
+              <Link to="/my-posts">
+                <Button variant="secondary" className="text-xs py-1.5">Yazılarım</Button>
+              </Link>
+              <Link to="/posts/create">
+                <Button className="text-xs py-1.5">+ Yeni Yazı</Button>
+              </Link>
+              <Button variant="secondary" className="text-xs py-1.5" onClick={handleLogout}>
+                Çıkış
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="secondary" className="text-xs py-1.5">Giriş</Button>
+              </Link>
+              <Link to="/register">
+                <Button className="text-xs py-1.5">Kayıt Ol</Button>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+</file>
+
+<file path="frontend/src/components/posts/PostCard.tsx">
+import { Link, useNavigate } from 'react-router-dom';
+import type { Post } from '../../types/post';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { useAuth } from '../../hooks/useAuth';
+
+interface Props {
+  post: Post;
+  showStatus?: boolean;
+  onApprove?: (id: number) => void;
+  onDelete?: (id: number) => void;
+}
+
+export function PostCard({ post, showStatus, onApprove, onDelete }: Props) {
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
+  const isOwner = user?.username === post.authorUsername;
+  const excerpt = post.content.length > 120 ? post.content.slice(0, 120) + '...' : post.content;
+  const date = new Date(post.createdDate).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const initial = post.authorUsername[0]?.toUpperCase() ?? '?';
+
+  return (
+    <div
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-md dark:hover:shadow-none dark:hover:border-gray-600 transition-all cursor-pointer flex flex-col"
+      onClick={() => navigate(`/posts/${post.id}`)}
+    >
+      {post.imageUrl ? (
+        <img src={post.imageUrl} alt={post.title} className="w-full h-44 object-cover" />
+      ) : (
+        <div className="w-full h-44 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/40 dark:to-indigo-900/40 flex items-center justify-center">
+          <span className="text-5xl font-bold text-blue-300 dark:text-blue-500 select-none">{initial}</span>
+        </div>
+      )}
+
+      <div className="p-5 flex flex-col gap-3 flex-1">
+        {showStatus && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Badge variant={post.isApproved ? 'approved' : 'pending'}>
+              {post.isApproved ? 'Onaylı' : 'Bekliyor'}
+            </Badge>
+          </div>
+        )}
+
+        <Link
+          to={`/posts/${post.id}`}
+          className="text-gray-900 dark:text-gray-100 font-semibold text-base leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {post.title}
+        </Link>
+
+        <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed flex-1">{excerpt}</p>
+
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold flex items-center justify-center shrink-0">
+              {initial}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <span className="font-medium text-gray-700 dark:text-gray-300">{post.authorUsername}</span>
+              <span>·</span>
+              <span>{date}</span>
+              {post.commentCount > 0 && (
+                <>
+                  <span>·</span>
+                  <span>{post.commentCount} yorum</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {onApprove && !post.isApproved && (
+              <Button variant="secondary" className="text-xs py-1 px-2" onClick={() => onApprove(post.id)}>
+                Onayla
+              </Button>
+            )}
+            {(isAdmin || isOwner) && onDelete && (
+              <Button variant="danger" className="text-xs py-1 px-2" onClick={() => onDelete(post.id)}>
+                Sil
+              </Button>
+            )}
+            <Link
+              to={`/posts/${post.id}`}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+            >
+              Oku →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/components/posts/PostForm.tsx">
+import { useState } from 'react';
+import { Button } from '../ui/Button';
+import { Alert } from '../ui/Alert';
+
+interface Props {
+  initialValues?: { title: string; content: string; imageUrl?: string };
+  onSubmit: (data: { title: string; content: string; imageUrl?: string }) => void;
+  isLoading: boolean;
+  error?: string;
+}
+
+const inputClass = 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors';
+const labelClass = 'text-gray-700 dark:text-gray-300 text-sm font-medium';
+
+export function PostForm({ initialValues, onSubmit, isLoading, error }: Props) {
+  const [title, setTitle] = useState(initialValues?.title ?? '');
+  const [content, setContent] = useState(initialValues?.content ?? '');
+  const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl ?? '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ title, content, imageUrl: imageUrl.trim() || undefined });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {error && <Alert message={error} />}
+
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Başlık</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          placeholder="Yazı başlığı..."
+          className={inputClass}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Kapak Görseli URL <span className="text-gray-400 dark:text-gray-500 font-normal">(opsiyonel)</span></label>
+        <input
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="https://..."
+          className={inputClass}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>İçerik</label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          rows={12}
+          placeholder="Yazı içeriği..."
+          className={`${inputClass} resize-y`}
+        />
+      </div>
+
+      <Button type="submit" isLoading={isLoading} className="self-end">
+        Kaydet
+      </Button>
+    </form>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Alert.tsx">
+interface Props {
+  message: string;
+  type?: 'error' | 'success' | 'info';
+}
+
+const styles = {
+  error: 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400',
+  success: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400',
+  info: 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400',
+};
+
+export function Alert({ message, type = 'error' }: Props) {
+  return (
+    <div className={`border rounded-lg px-4 py-3 text-sm ${styles[type]}`}>
+      {message}
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Badge.tsx">
+interface Props {
+  children: string;
+  variant?: 'default' | 'pending' | 'approved' | 'admin';
+}
+
+const variants = {
+  default: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+  pending: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400',
+  approved: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400',
+  admin: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
+};
+
+export function Badge({ children, variant = 'default' }: Props) {
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${variants[variant]}`}>
+      {children}
+    </span>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Button.tsx">
+import type { ButtonHTMLAttributes } from 'react';
+
+interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'danger';
+  isLoading?: boolean;
+}
+
+const variants = {
+  primary: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600',
+  secondary: 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
+  danger: 'bg-red-600 hover:bg-red-700 text-white',
+};
+
+export function Button({ variant = 'primary', isLoading, children, className = '', disabled, ...props }: Props) {
+  return (
+    <button
+      {...props}
+      disabled={disabled || isLoading}
+      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+    >
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          Yükleniyor...
+        </span>
+      ) : (
+        children
+      )}
+    </button>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Spinner.tsx">
+export function Spinner() {
+  return (
+    <div className="flex justify-center py-12">
+      <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+      </svg>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/context/AuthContext.tsx">
+import { createContext, useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import type { AuthUser, AuthResponse } from '../types/auth';
+import { setLogoutCallback } from '../api/axios';
+
+interface AuthContextType {
+  user: AuthUser | null;
+  login: (data: AuthResponse) => void;
+  logout: () => void;
+  isAdmin: boolean;
+  isAuthenticated: boolean;
+}
+
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+    if (token && username && role) return { token, username, role };
+    return null;
+  });
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+    setUser(null);
+  }, []);
+
+  const login = useCallback((data: AuthResponse) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('username', data.username);
+    localStorage.setItem('role', data.role);
+    setUser({ token: data.token, username: data.username, role: data.role });
+  }, []);
+
+  useEffect(() => {
+    setLogoutCallback(logout);
+  }, [logout]);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAdmin: user?.role === 'Admin',
+        isAuthenticated: user !== null,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+</file>
+
+<file path="frontend/src/context/ThemeContext.tsx">
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+
+type Theme = 'light' | 'dark';
+
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({} as ThemeContextType);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    return (localStorage.getItem('theme') as Theme) ?? 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export const useTheme = () => useContext(ThemeContext);
+</file>
+
+<file path="frontend/src/guards/AdminRoute.tsx">
+import { Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { useAuth } from '../hooks/useAuth';
+
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const { isAdmin, isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+</file>
+
+<file path="frontend/src/guards/PrivateRoute.tsx">
+import { Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { useAuth } from '../hooks/useAuth';
+
+export function PrivateRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
+</file>
+
+<file path="frontend/src/hooks/useAuth.ts">
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+</file>
+
+<file path="frontend/src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+</file>
+
+<file path="frontend/src/main.tsx">
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.tsx';
+import { AuthProvider } from './context/AuthContext.tsx';
+import { ThemeProvider } from './context/ThemeContext.tsx';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ThemeProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </ThemeProvider>
+  </StrictMode>,
+);
+</file>
+
+<file path="frontend/src/pages/AdminPage.tsx">
+import { useEffect, useState } from 'react';
+import type { Post } from '../types/post';
+import { getPending, approvePost, deletePost } from '../api/postsApi';
+import { PostCard } from '../components/posts/PostCard';
+import { Spinner } from '../components/ui/Spinner';
+import { Alert } from '../components/ui/Alert';
+
+export function AdminPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getPending()
+      .then(setPosts)
+      .catch(() => setError('Yazılar yüklenemedi.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleApprove = async (id: number) => {
+    await approvePost(id);
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Yazıyı silmek istediğinizden emin misiniz?')) return;
+    await deletePost(id);
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Admin Paneli</h1>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Onay bekleyen yazılar</p>
+
+      {loading && <Spinner />}
+      {error && <Alert message={error} />}
+
+      {!loading && !error && posts.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-gray-500">Onay bekleyen yazı yok.</p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4">
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            showStatus
+            onApprove={handleApprove}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/CreatePostPage.tsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPost } from '../api/postsApi';
+import { PostForm } from '../components/posts/PostForm';
+
+export function CreatePostPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (data: { title: string; content: string; imageUrl?: string }) => {
+    setLoading(true);
+    setError('');
+    try {
+      await createPost(data);
+      navigate('/', { state: { info: 'Yazınız onay için gönderildi.' } });
+    } catch {
+      setError('Yazı oluşturulurken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Yeni Yazı</h1>
+      <PostForm onSubmit={handleSubmit} isLoading={loading} error={error} />
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/EditPostPage.tsx">
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getById, updatePost } from '../api/postsApi';
+import { PostForm } from '../components/posts/PostForm';
+import { Spinner } from '../components/ui/Spinner';
+import { Alert } from '../components/ui/Alert';
+
+export function EditPostPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const postId = Number(id);
+
+  const [initialValues, setInitialValues] = useState<{ title: string; content: string; imageUrl?: string } | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    getById(postId)
+      .then((p) => setInitialValues({ title: p.title, content: p.content, imageUrl: p.imageUrl }))
+      .catch(() => setLoadError('Yazı yüklenemedi.'));
+  }, [postId]);
+
+  const handleSubmit = async (data: { title: string; content: string; imageUrl?: string }) => {
+    setSubmitLoading(true);
+    setSubmitError('');
+    try {
+      await updatePost(postId, data);
+      navigate(`/posts/${postId}`);
+    } catch {
+      setSubmitError('Yazı güncellenirken bir hata oluştu.');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  if (loadError) return <div className="max-w-3xl mx-auto px-4 py-8"><Alert message={loadError} /></div>;
+  if (!initialValues) return <div className="max-w-3xl mx-auto px-4 py-8"><Spinner /></div>;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Yazıyı Düzenle</h1>
+      <PostForm
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        isLoading={submitLoading}
+        error={submitError}
+      />
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/HomePage.tsx">
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import type { Post } from '../types/post';
+import { getApproved } from '../api/postsApi';
+import { PostCard } from '../components/posts/PostCard';
+import { Spinner } from '../components/ui/Spinner';
+import { Alert } from '../components/ui/Alert';
+
+export function HomePage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') ?? '';
+
+  useEffect(() => {
+    getApproved()
+      .then(setPosts)
+      .catch(() => setError('Yazılar yüklenemedi.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = query
+    ? posts.filter(
+        (p) =>
+          p.title.toLowerCase().includes(query.toLowerCase()) ||
+          p.content.toLowerCase().includes(query.toLowerCase())
+      )
+    : posts;
+
+  const popular = [...posts].sort((a, b) => b.commentCount - a.commentCount).slice(0, 5);
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {query && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          "<span className="font-medium text-gray-800 dark:text-gray-200">{query}</span>" için {filtered.length} sonuç
+        </p>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        <main className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">{query ? 'Arama Sonuçları' : 'Son Yazılar'}</h1>
+
+          {loading && <Spinner />}
+          {error && <Alert message={error} />}
+
+          {!loading && !error && filtered.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400">
+              {query ? 'Sonuç bulunamadı.' : 'Henüz onaylanmış yazı yok.'}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {filtered.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </main>
+
+        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-6">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Popüler Yazılar</h2>
+            {loading ? (
+              <Spinner />
+            ) : popular.length === 0 ? (
+              <p className="text-gray-400 dark:text-gray-500 text-sm">Henüz yazı yok.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {popular.map((post) => (
+                  <Link key={post.id} to={`/posts/${post.id}`} className="flex gap-3 group">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0">
+                      {post.imageUrl ? (
+                        <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/40 dark:to-indigo-900/40 flex items-center justify-center">
+                          <span className="text-lg font-bold text-blue-300 dark:text-blue-500">{post.authorUsername[0]?.toUpperCase()}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                        {post.title}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        {post.commentCount > 0 ? `${post.commentCount} yorum` : post.authorUsername}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-5 transition-colors">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Bu Blog Hakkında</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              Teknoloji, yazılım ve daha fazlası hakkında yazarların deneyimlerini paylaştığı bir platform.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/LoginPage.tsx">
+import { useState } from 'react';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { login } from '../api/authApi';
+import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui/Button';
+import { Alert } from '../components/ui/Alert';
+
+const inputClass = 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors';
+
+export function LoginPage() {
+  const { isAuthenticated, login: setUser } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (isAuthenticated) return <Navigate to="/" replace />;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const data = await login({ email, password });
+      setUser(data);
+      navigate('/');
+    } catch {
+      setError('E-posta veya şifre hatalı.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm dark:shadow-none transition-colors">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Giriş Yap</h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && <Alert message={error} />}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium">E-posta</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputClass} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium">Şifre</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClass} />
+          </div>
+
+          <Button type="submit" isLoading={loading} className="mt-1">
+            Giriş Yap
+          </Button>
+        </form>
+
+        <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-4">
+          Hesabın yok mu?{' '}
+          <Link to="/register" className="text-blue-600 hover:underline">Kayıt ol</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/MyPostsPage.tsx">
+import { useEffect, useState } from 'react';
+import type { Post } from '../types/post';
+import { getUserPosts, deletePost } from '../api/postsApi';
+import { PostCard } from '../components/posts/PostCard';
+import { Spinner } from '../components/ui/Spinner';
+import { Alert } from '../components/ui/Alert';
+
+export function MyPostsPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getUserPosts()
+      .then(setPosts)
+      .catch(() => setError('Yazılar yüklenemedi.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    await deletePost(id);
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Yazılarım</h1>
+
+      {loading && <Spinner />}
+      {error && <Alert message={error} />}
+
+      {!loading && !error && posts.length === 0 && (
+        <p className="text-gray-500 dark:text-gray-400">Henüz hiç yazı yazmadınız.</p>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} showStatus onDelete={handleDelete} />
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/PostDetailPage.tsx">
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import type { Post } from '../types/post';
+import type { Comment } from '../types/comment';
+import { getById, deletePost } from '../api/postsApi';
+import { getByPost, createComment, deleteComment } from '../api/commentsApi';
+import { Spinner } from '../components/ui/Spinner';
+import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/Button';
+import { CommentList } from '../components/comments/CommentList';
+import { CommentForm } from '../components/comments/CommentForm';
+import { useAuth } from '../hooks/useAuth';
+
+export function PostDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, isAdmin, isAuthenticated } = useAuth();
+
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  const postId = Number(id);
+
+  useEffect(() => {
+    Promise.all([getById(postId), getByPost(postId)])
+      .then(([p, c]) => {
+        setPost(p);
+        setComments(c);
+      })
+      .catch(() => setError('Yazı yüklenemedi.'))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  const handleDelete = async () => {
+    if (!confirm('Yazıyı silmek istediğinizden emin misiniz?')) return;
+    await deletePost(postId);
+    navigate('/');
+  };
+
+  const handleAddComment = async (text: string) => {
+    setCommentLoading(true);
+    try {
+      const c = await createComment(postId, { text });
+      setComments((prev) => [...prev, c]);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    await deleteComment(postId, commentId);
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  };
+
+  if (loading) return <div className="max-w-3xl mx-auto px-4 py-8"><Spinner /></div>;
+  if (error || !post) return <div className="max-w-3xl mx-auto px-4 py-8"><Alert message={error || 'Yazı bulunamadı.'} /></div>;
+
+  const isOwner = user?.username === post.authorUsername;
+  const date = new Date(post.createdDate).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const initial = post.authorUsername[0]?.toUpperCase() ?? '?';
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      {post.imageUrl && (
+        <img src={post.imageUrl} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
+      )}
+
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">{post.title}</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-sm font-bold flex items-center justify-center">
+              {initial}
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+              <span className="font-medium text-gray-700 dark:text-gray-300">{post.authorUsername}</span>
+              <span>·</span>
+              <span>{date}</span>
+            </div>
+          </div>
+          {(isAdmin || isOwner) && (
+            <div className="flex gap-2">
+              <Link to={`/posts/${post.id}/edit`}>
+                <Button variant="secondary" className="text-xs py-1">Düzenle</Button>
+              </Link>
+              <Button variant="danger" className="text-xs py-1" onClick={handleDelete}>Sil</Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap mb-10 border-b border-gray-200 dark:border-gray-700 pb-8">
+        {post.content}
+      </div>
+
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Yorumlar ({comments.length})</h2>
+        <CommentList comments={comments} postId={postId} onDelete={handleDeleteComment} />
+
+        {isAuthenticated && (
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Yorum Ekle</h3>
+            <CommentForm onSubmit={handleAddComment} isLoading={commentLoading} />
+          </div>
+        )}
+        {!isAuthenticated && (
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            Yorum yapmak için <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">giriş yapın</Link>.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/RegisterPage.tsx">
+import { useState } from 'react';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { register } from '../api/authApi';
+import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui/Button';
+import { Alert } from '../components/ui/Alert';
+
+const inputClass = 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors';
+
+export function RegisterPage() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (isAuthenticated) return <Navigate to="/" replace />;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await register({ username, email, password });
+      navigate('/login', { state: { success: 'Kayıt başarılı! Giriş yapabilirsiniz.' } });
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr?.response?.data?.message ?? 'Kayıt sırasında bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm dark:shadow-none transition-colors">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Kayıt Ol</h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && <Alert message={error} />}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium">Kullanıcı Adı</label>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required className={inputClass} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium">E-posta</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputClass} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-gray-700 dark:text-gray-300 text-sm font-medium">Şifre</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className={inputClass} />
+          </div>
+
+          <Button type="submit" isLoading={loading} className="mt-1">
+            Kayıt Ol
+          </Button>
+        </form>
+
+        <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-4">
+          Zaten hesabın var mı?{' '}
+          <Link to="/login" className="text-blue-600 hover:underline">Giriş yap</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/types/auth.ts">
+export interface AuthResponse {
+  token: string;
+  username: string;
+  role: string;
+}
+
+export interface AuthUser {
+  token: string;
+  username: string;
+  role: string;
+}
+</file>
+
+<file path="frontend/src/types/comment.ts">
+export interface Comment {
+  id: number;
+  text: string;
+  createdDate: string;
+  username: string;
+}
+
+export interface CreateCommentPayload {
+  text: string;
+}
+</file>
+
+<file path="frontend/src/types/post.ts">
+export interface Post {
+  id: number;
+  title: string;
+  content: string;
+  createdDate: string;
+  isApproved: boolean;
+  authorUsername: string;
+  commentCount: number;
+  imageUrl?: string;
+}
+
+export interface CreatePostPayload {
+  title: string;
+  content: string;
+  imageUrl?: string;
+}
+
+export interface UpdatePostPayload {
+  title: string;
+  content: string;
+  imageUrl?: string;
+}
+</file>
+
+<file path="frontend/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="frontend/tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="frontend/tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="frontend/tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="frontend/vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
+<file path="backend/BlogApi/Controllers/PostsController.cs">
+using System.Security.Claims;
+using BlogApi.DTOs;
+using BlogApi.Services;
+using BlogApi.Services.Results;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BlogApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PostsController(IPostService postService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] int? categoryId) =>
+        Ok(await postService.GetAllApprovedAsync(categoryId));
+
+    [HttpGet("pending")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetPending() =>
+        Ok(await postService.GetPendingAsync());
+
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<IActionResult> GetMy()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        return Ok(await postService.GetUserPostsAsync(userId));
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var result = await postService.GetByIdAsync(id, User.IsInRole("Admin"), userId);
+        return result.Status switch
+        {
+            ResultStatus.NotFound => NotFound(),
+            ResultStatus.Forbidden => Forbid(),
+            _ => Ok(result.Data)
+        };
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Create([FromBody] CreatePostDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var postId = await postService.CreateAsync(dto, userId);
+        return StatusCode(201, new { postId, message = "Post submitted for approval." });
+    }
+
+    [HttpPut("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdatePostDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await postService.UpdateAsync(id, dto, userId, User.IsInRole("Admin"));
+        return result.Status switch
+        {
+            ResultStatus.NotFound => NotFound(),
+            ResultStatus.Forbidden => Forbid(),
+            _ => NoContent()
+        };
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await postService.DeleteAsync(id, userId, User.IsInRole("Admin"));
+        return result.Status switch
+        {
+            ResultStatus.NotFound => NotFound(),
+            ResultStatus.Forbidden => Forbid(),
+            _ => NoContent()
+        };
+    }
+
+    [HttpPost("{id:int}/approve")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Approve(int id)
+    {
+        var result = await postService.ApproveAsync(id);
+        return result.Status == ResultStatus.NotFound
+            ? NotFound()
+            : Ok(new { message = "Post approved." });
+    }
+}
+</file>
+
+<file path="backend/BlogApi/Data/Migrations/ApplicationDbContextModelSnapshot.cs">
+// <auto-generated />
+using System;
+using BlogApi.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace BlogApi.Data.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    {
+        protected override void BuildModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("Posts");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Comment", b =>
+                {
+                    b.HasOne("BlogApi.Models.Post", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", "Author")
+                        .WithMany("Posts")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("BlogApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BlogApi.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("BlogApi.Models.Post", b =>
+                {
+                    b.Navigation("Comments");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="backend/BlogApi/DTOs/PostDtos.cs">
+namespace BlogApi.DTOs;
+
+public record CreatePostDto(string Title, string Content, string? ImageUrl, List<int>? CategoryIds);
+
+public record UpdatePostDto(string Title, string Content, string? ImageUrl, List<int>? CategoryIds);
+
+public record PostResponseDto(
+    int Id,
+    string Title,
+    string Content,
+    DateTime CreatedDate,
+    bool IsApproved,
+    string AuthorUsername,
+    int CommentCount,
+    string? ImageUrl,
+    List<CategoryDto> Categories);
+</file>
+
+<file path="backend/BlogApi/Models/Post.cs">
+namespace BlogApi.Models;
+
+public class Post
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public bool IsApproved { get; set; } = false;
+    public string? ImageUrl { get; set; }
+
+    public string AuthorId { get; set; } = string.Empty;
+    public ApplicationUser Author { get; set; } = null!;
+
+    public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<Category> Categories { get; set; } = [];
+}
+</file>
+
+<file path="backend/BlogApi/Services/IPostService.cs">
+using BlogApi.DTOs;
+using BlogApi.Services.Results;
+
+namespace BlogApi.Services;
+
+public interface IPostService
+{
+    Task<IEnumerable<PostResponseDto>> GetAllApprovedAsync(int? categoryId = null);
+    Task<IEnumerable<PostResponseDto>> GetPendingAsync();
+    Task<IEnumerable<PostResponseDto>> GetUserPostsAsync(string userId);
+    Task<ServiceResult<PostResponseDto>> GetByIdAsync(int id, bool isAdmin, string? userId = null);
+    Task<int> CreateAsync(CreatePostDto dto, string userId);
+    Task<ServiceResult> UpdateAsync(int id, UpdatePostDto dto, string userId, bool isAdmin);
+    Task<ServiceResult> DeleteAsync(int id, string userId, bool isAdmin);
+    Task<ServiceResult> ApproveAsync(int id);
+}
+</file>
+
+<file path="backend/BlogApi/Services/PostService.cs">
+using BlogApi.Data;
+using BlogApi.DTOs;
+using BlogApi.Models;
+using BlogApi.Services.Results;
+using Microsoft.EntityFrameworkCore;
+
+namespace BlogApi.Services;
+
+public class PostService(ApplicationDbContext db) : IPostService
+{
+    public async Task<IEnumerable<PostResponseDto>> GetAllApprovedAsync(int? categoryId = null) =>
+        await db.Posts
+            .Where(p => p.IsApproved && (categoryId == null || p.Categories.Any(c => c.Id == categoryId)))
+            .OrderByDescending(p => p.CreatedDate)
+            .Select(p => new PostResponseDto(
+                p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved,
+                p.Author.UserName!,
+                p.Comments.Count,
+                p.ImageUrl,
+                p.Categories.Select(c => new CategoryDto(c.Id, c.Name)).ToList()))
+            .ToListAsync();
+
+    public async Task<IEnumerable<PostResponseDto>> GetPendingAsync() =>
+        await db.Posts
+            .Where(p => !p.IsApproved)
+            .OrderByDescending(p => p.CreatedDate)
+            .Select(p => new PostResponseDto(
+                p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved,
+                p.Author.UserName!,
+                p.Comments.Count,
+                p.ImageUrl,
+                p.Categories.Select(c => new CategoryDto(c.Id, c.Name)).ToList()))
+            .ToListAsync();
+
+    public async Task<IEnumerable<PostResponseDto>> GetUserPostsAsync(string userId) =>
+        await db.Posts
+            .Where(p => p.AuthorId == userId)
+            .OrderBy(p => p.IsApproved)
+            .ThenByDescending(p => p.CreatedDate)
+            .Select(p => new PostResponseDto(
+                p.Id, p.Title, p.Content, p.CreatedDate, p.IsApproved,
+                p.Author.UserName!,
+                p.Comments.Count,
+                p.ImageUrl,
+                p.Categories.Select(c => new CategoryDto(c.Id, c.Name)).ToList()))
+            .ToListAsync();
+
+    public async Task<ServiceResult<PostResponseDto>> GetByIdAsync(int id, bool isAdmin, string? userId = null)
+    {
+        var post = await db.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Comments)
+            .Include(p => p.Categories)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (post is null) return ServiceResult<PostResponseDto>.NotFound();
+        if (!post.IsApproved && !isAdmin && post.AuthorId != userId) return ServiceResult<PostResponseDto>.Forbidden();
+
+        return ServiceResult<PostResponseDto>.Ok(
+            new PostResponseDto(
+                post.Id, post.Title, post.Content, post.CreatedDate, post.IsApproved,
+                post.Author.UserName!,
+                post.Comments.Count,
+                post.ImageUrl,
+                post.Categories.Select(c => new CategoryDto(c.Id, c.Name)).ToList()));
+    }
+
+    public async Task<int> CreateAsync(CreatePostDto dto, string userId)
+    {
+        var post = new Post
+        {
+            Title = dto.Title,
+            Content = dto.Content,
+            ImageUrl = dto.ImageUrl,
+            AuthorId = userId,
+            IsApproved = false
+        };
+
+        if (dto.CategoryIds is { Count: > 0 })
+        {
+            var cats = await db.Categories
+                .Where(c => dto.CategoryIds.Contains(c.Id))
+                .ToListAsync();
+            foreach (var c in cats) post.Categories.Add(c);
+        }
+
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+        return post.Id;
+    }
+
+    public async Task<ServiceResult> UpdateAsync(int id, UpdatePostDto dto, string userId, bool isAdmin)
+    {
+        var post = await db.Posts
+            .Include(p => p.Categories)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (post is null) return ServiceResult.NotFound();
+        if (post.AuthorId != userId && !isAdmin) return ServiceResult.Forbidden();
+
+        post.Title = dto.Title;
+        post.Content = dto.Content;
+        post.ImageUrl = dto.ImageUrl;
+        post.IsApproved = false;
+
+        post.Categories.Clear();
+        if (dto.CategoryIds is { Count: > 0 })
+        {
+            var cats = await db.Categories
+                .Where(c => dto.CategoryIds.Contains(c.Id))
+                .ToListAsync();
+            foreach (var c in cats) post.Categories.Add(c);
+        }
+
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+
+    public async Task<ServiceResult> DeleteAsync(int id, string userId, bool isAdmin)
+    {
+        var post = await db.Posts.FindAsync(id);
+        if (post is null) return ServiceResult.NotFound();
+        if (post.AuthorId != userId && !isAdmin) return ServiceResult.Forbidden();
+
+        db.Posts.Remove(post);
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+
+    public async Task<ServiceResult> ApproveAsync(int id)
+    {
+        var post = await db.Posts.FindAsync(id);
+        if (post is null) return ServiceResult.NotFound();
+
+        post.IsApproved = true;
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+}
+</file>
+
+</files>

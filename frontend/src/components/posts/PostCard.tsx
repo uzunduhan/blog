@@ -53,6 +53,14 @@ export function PostCard({ post, showStatus, onApprove, onDelete }: Props) {
           {post.title}
         </Link>
 
+        {post.categories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {post.categories.map((cat) => (
+              <Badge key={cat.id} variant="default">{cat.name}</Badge>
+            ))}
+          </div>
+        )}
+
         <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed flex-1">{excerpt}</p>
 
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">

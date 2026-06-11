@@ -12,8 +12,8 @@ namespace BlogApi.Controllers;
 public class PostsController(IPostService postService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await postService.GetAllApprovedAsync());
+    public async Task<IActionResult> GetAll([FromQuery] PostsQueryDto query) =>
+        Ok(await postService.GetAllApprovedAsync(query));
 
     [HttpGet("pending")]
     [Authorize(Roles = "Admin")]

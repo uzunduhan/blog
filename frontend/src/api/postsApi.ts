@@ -1,7 +1,8 @@
 import api from './axios';
-import type { Post, CreatePostPayload, UpdatePostPayload } from '../types/post';
+import type { Post, CreatePostPayload, UpdatePostPayload, PostsQuery, PagedResult } from '../types/post';
 
-export const getApproved = (): Promise<Post[]> => api.get('/posts').then((r) => r.data);
+export const getApproved = (query: PostsQuery = {}): Promise<PagedResult<Post>> =>
+  api.get('/posts', { params: query }).then((r) => r.data);
 export const getPending = (): Promise<Post[]> => api.get('/posts/pending').then((r) => r.data);
 export const getUserPosts = (): Promise<Post[]> => api.get('/posts/my').then((r) => r.data);
 export const getById = (id: number): Promise<Post> => api.get(`/posts/${id}`).then((r) => r.data);

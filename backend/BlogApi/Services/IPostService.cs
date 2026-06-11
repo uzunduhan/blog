@@ -5,7 +5,7 @@ namespace BlogApi.Services;
 
 public interface IPostService
 {
-    Task<IEnumerable<PostResponseDto>> GetAllApprovedAsync();
+    Task<PagedResult<PostResponseDto>> GetAllApprovedAsync(PostsQueryDto query);
     Task<IEnumerable<PostResponseDto>> GetPendingAsync();
     Task<IEnumerable<PostResponseDto>> GetUserPostsAsync(string userId);
     Task<ServiceResult<PostResponseDto>> GetByIdAsync(int id, bool isAdmin, string? userId = null);
